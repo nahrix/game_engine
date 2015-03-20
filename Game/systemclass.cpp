@@ -42,7 +42,12 @@ bool SystemClass::Initialize()
 	}
 
 	// Initialize the input object.
-	m_Input->Initialize();
+	result = m_Input->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
+	if(!result)
+	{
+		MessageBox(m_hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
+		return false;
+	}
 
 	// Create the graphics object.  This object will handle rendering all the graphics for this application.
 	m_Graphics = new GraphicsClass;
@@ -75,6 +80,7 @@ void SystemClass::Shutdown()
 	// Release the input object.
 	if(m_Input)
 	{
+        m_Input->Shutdown();
 		delete m_Input;
 		m_Input = 0;
 	}
@@ -117,8 +123,15 @@ void SystemClass::Run()
 			result = Frame();
 			if(!result)
 			{
+                MessageBox(m_hwnd, L"Frame Processing Failed", L"Error", MB_OK);
 				done = true;
 			}
+		}
+
+        // Check if the user pressed escape and wants to quit.
+		if(m_Input->IsEscapePressed() == true)
+		{
+			done = true;
 		}
 
 	}
@@ -130,16 +143,72 @@ void SystemClass::Run()
 bool SystemClass::Frame()
 {
 	bool result;
+    int mouseX, mouseY;
+    int mouseMovedX, mouseMovedY, mouseMovedZ;
 
+    static float rotateX = 0.0f;
+    static float rotateY = 0.0f;
+    static float rotateZ = 0.0f;
+    static float zoom = -10.0f;
 
-	// Check if the user pressed escape and wants to exit the application.
-	if(m_Input->IsKeyDown(VK_ESCAPE))
+    mouseMovedX = 0;
+    mouseMovedY = 0;
+    mouseMovedZ = 0;
+
+	// Do the input frame processing.
+	result = m_Input->Frame();
+	if(!result)
 	{
 		return false;
 	}
 
+	// Get the location of the mouse from the input object,
+	m_Input->GetMouseLocation(mouseX, mouseY);
+    m_Input->GetMouseMoved(mouseMovedX, mouseMovedY, mouseMovedZ);
+
+    if (!m_Input->IsLeftMouseDown())
+    {
+        mouseMovedX = 0;
+        mouseMovedY = 0;
+    }
+    
+    // Update the rotation variable each frame.
+    rotateX -= (float)D3DX_PI * (mouseMovedX * 0.001f);
+    rotateY -= (float)D3DX_PI * (mouseMovedY * 0.001f);
+
+    if (zoom > 0)
+    {
+        zoom += mouseMovedZ * (abs(zoom) * 0.08f);
+    }
+    else
+    {
+        zoom += mouseMovedZ * (abs(zoom) * 0.00064f);
+    }
+    if (zoom > -0.00001)
+    {
+        zoom = -0.00001;
+    }
+
+    // Reset rotations after a full 360-degree rotation
+    if (rotateX > (float)D3DX_PI * 2)
+	{
+		rotateX -= (float)D3DX_PI * 2;
+	}
+    else if (rotateX < -(float)D3DX_PI * 2)
+    {
+        rotateX += (float)D3DX_PI * 2;
+    }
+    if (rotateY > (float)D3DX_PI * 2)
+    {
+        rotateY -= (float)D3DX_PI * 2;
+    }
+    else if (rotateY < -(float)D3DX_PI * 2)
+    {
+        rotateY += (float)D3DX_PI * 2;
+    }
+
 	// Do the frame processing for the graphics object.
-	result = m_Graphics->Frame();
+	result = m_Graphics->Frame(rotateX, rotateY, rotateZ, zoom);
 	if(!result)
 	{
 		return false;
@@ -151,30 +220,7 @@ bool SystemClass::Frame()
 
 LRESULT CALLBACK SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-	switch(umsg)
-	{
-		// Check if a key has been pressed on the keyboard.
-		case WM_KEYDOWN:
-		{
-			// If a key is pressed send it to the input object so it can record that state.
-			m_Input->KeyDown((unsigned int)wparam);
-			return 0;
-		}
-
-		// Check if a key has been released on the keyboard.
-		case WM_KEYUP:
-		{
-			// If a key is released then send it to the input object so it can unset the state for that key.
-			m_Input->KeyUp((unsigned int)wparam);
-			return 0;
-		}
-
-		// Any other messages send to the default message handler as our application won't make use of them.
-		default:
-		{
-			return DefWindowProc(hwnd, umsg, wparam, lparam);
-		}
-	}
+	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
 

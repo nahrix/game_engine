@@ -16,6 +16,7 @@
 *.idb
 *.lastbuildstate
 *.unsuccessfulbuild
+*.ilk
  
 # Packages #
 ############
