@@ -35,6 +35,7 @@ public:
 	bool Frame();
 
     bool IsEscapePressed();
+    bool IsPressed(int);
     bool IsLeftMouseDown();
     bool IsRightMouseDown();
     bool IsMiddleMouseDown();

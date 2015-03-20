@@ -38,7 +38,7 @@ public:
 
 	bool Initialize(int, int, HWND);
 	void Shutdown();
-	bool Frame(float, float, float, float);
+	bool Frame(float, float, float, float, float, float);
 	bool Render(float, float, float);
 
 private:

@@ -145,6 +145,8 @@ bool SystemClass::Frame()
 	bool result;
     int mouseX, mouseY;
     int mouseMovedX, mouseMovedY, mouseMovedZ;
+    float moveX, moveY;
+    const float moveSpeed = 0.05f;
 
     static float rotateX = 0.0f;
     static float rotateY = 0.0f;
@@ -154,6 +156,9 @@ bool SystemClass::Frame()
     mouseMovedX = 0;
     mouseMovedY = 0;
     mouseMovedZ = 0;
+
+    moveX = 0;
+    moveY = 0;
 
 	// Do the input frame processing.
 	result = m_Input->Frame();
@@ -176,6 +181,7 @@ bool SystemClass::Frame()
     rotateX -= (float)D3DX_PI * (mouseMovedX * 0.001f);
     rotateY -= (float)D3DX_PI * (mouseMovedY * 0.001f);
 
+    // Zoom out exponentially, and zoom in logarithmically
     if (zoom > 0)
     {
         zoom += mouseMovedZ * (abs(zoom) * 0.08f);
@@ -186,7 +192,7 @@ bool SystemClass::Frame()
     }
     if (zoom > -0.00001)
     {
-        zoom = -0.00001;
+        zoom = -0.00001f;
     }
 
     // Reset rotations after a full 360-degree rotation
@@ -207,8 +213,25 @@ bool SystemClass::Frame()
         rotateY += (float)D3DX_PI * 2;
     }
 
+    if (m_Input->IsPressed(DIK_W))
+    {
+        moveY = moveSpeed;
+    }
+    if (m_Input->IsPressed(DIK_A))
+    {
+        moveX = -moveSpeed;
+    }
+    if (m_Input->IsPressed(DIK_S))
+    {
+        moveY = -moveSpeed;
+    }
+    if (m_Input->IsPressed(DIK_D))
+    {
+        moveX = moveSpeed;
+    }
+
 	// Do the frame processing for the graphics object.
-	result = m_Graphics->Frame(rotateX, rotateY, rotateZ, zoom);
+	result = m_Graphics->Frame(rotateX, rotateY, rotateZ, zoom, moveX, moveY);
 	if(!result)
 	{
 		return false;

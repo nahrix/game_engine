@@ -63,7 +63,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/sword.txt", L"../Engine/data/sword.tif");
+	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/syn.txt", L"../Engine/data/syn.png");
 	if(!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
@@ -93,11 +93,10 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the light object.
-    m_Light->SetAmbientColor(0.3f, 0.3f, 0.3f, 1.0f);
+    m_Light->SetAmbientColor(0.2f, 0.2f, 0.2f, 1.0f);
     m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-	m_Light->SetDirection(1.0f, -0.3f, 0.0f);
-    m_Light->SetDirection(0.0f, 0.0f, 1.0f);
-	m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
+	m_Light->SetDirection(0.8f, -1.0f, 0.1f);
+	m_Light->SetSpecularColor(0.85f, 1.0f, 0.98f, 1.0f);
 	m_Light->SetSpecularPower(32.0f);
 
 	return true;
@@ -147,13 +146,15 @@ void GraphicsClass::Shutdown()
 	return;
 }
 
-bool GraphicsClass::Frame(float rotationX, float rotationY, float rotationZ, float zoom)
+bool GraphicsClass::Frame(float rotationX, float rotationY, float rotationZ, float zoom, float moveX, float moveY)
 {
 	bool result;
     D3DXVECTOR3 cameraPos;
     
     cameraPos = m_Camera->GetPosition();
     cameraPos.z = zoom;
+    cameraPos.x += moveX;
+    cameraPos.y += moveY;
     m_Camera->SetPosition(cameraPos.x, cameraPos.y, cameraPos.z);
     
     result = Render(rotationX, rotationY, rotationZ);
