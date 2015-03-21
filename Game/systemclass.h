@@ -4,6 +4,12 @@
 #ifndef _SYSTEMCLASS_H_
 #define _SYSTEMCLASS_H_
 
+#if (DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#endif
+
 ///////////////////////////////
 // PRE-PROCESSING DIRECTIVES //
 ///////////////////////////////
@@ -22,6 +28,8 @@
 #include "inputclass.h"
 #include "graphicsclass.h"
 
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: SystemClass

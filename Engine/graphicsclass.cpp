@@ -10,7 +10,9 @@ GraphicsClass::GraphicsClass()
 	m_Camera = 0;
 	m_Model = 0;
 	m_LightShader = 0;
+    m_TextureShader = 0;
 	m_Light = 0;
+    m_Bitmaps = 0;
 }
 
 
@@ -28,6 +30,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	bool result;
 
+    m_screenWidth = screenWidth;
+    m_screenHeight = screenHeight;
 
 	// Create the Direct3D object.
 	m_D3D = new D3DClass;
@@ -69,7 +73,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
 		return false;
 	}
-
+    
 	// Create the light shader object.
 	m_LightShader = new LightShaderClass;
 	if(!m_LightShader)
@@ -77,34 +81,91 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
-	// Initialize the light shader object.
+    // Initialize the light shader object.
 	result = m_LightShader->Initialize(m_D3D->GetDevice(), hwnd);
 	if(!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the light shader object.", L"Error", MB_OK);
 		return false;
 	}
-
+    
+    // Create the texture shader object.
+    m_TextureShader = new TextureShaderClass;
+    if (!m_TextureShader)
+    {
+        return false;
+    }
+    
+    // Initialize the texture shader object.
+    result = m_TextureShader->Initialize(m_D3D->GetDevice(), hwnd, L"../engine/texture.vs", L"../engine/texture.ps");
+    if (!result)
+    {
+        MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
+		return false;
+    }
+    
 	// Create the light object.
 	m_Light = new LightClass;
 	if(!m_Light)
 	{
 		return false;
 	}
-
+    
+    // Create the bitmap object.
+	m_Bitmaps = new unordered_map<string, BitmapClass*>;
+	if(!m_Bitmaps)
+	{
+		return false;
+	}
+    
 	// Initialize the light object.
     m_Light->SetAmbientColor(0.2f, 0.2f, 0.2f, 1.0f);
     m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	m_Light->SetDirection(0.8f, -1.0f, 0.1f);
 	m_Light->SetSpecularColor(0.85f, 1.0f, 0.98f, 1.0f);
 	m_Light->SetSpecularPower(32.0f);
-
+    
 	return true;
+}
+
+string GraphicsClass::LoadBitmapResource(WCHAR* filePath, int bitmapWidth, int bitmapHeight)
+{
+    BitmapClass* bitmap;
+    UUID uuid;
+    char* cuuid;
+    string suuid;
+
+    bitmap = new BitmapClass();
+    bitmap->Initialize(m_D3D->GetDevice(), filePath, bitmapWidth, bitmapHeight, m_screenWidth, m_screenHeight);
+    
+    UuidCreate(&uuid);
+    UuidToStringA(&uuid, (RPC_CSTR*)&cuuid);
+    suuid = cuuid;
+    RpcStringFreeA((RPC_CSTR*)&cuuid);
+
+    m_Bitmaps->emplace(suuid, bitmap);
+
+    return suuid;
 }
 
 
 void GraphicsClass::Shutdown()
 {
+    // Release the bitmap object.
+    if (m_Bitmaps)
+    {
+        for (auto it = m_Bitmaps->begin(); it != m_Bitmaps->end(); it++)
+        {
+            it->second->Shutdown();
+            delete it->second;
+            it->second = 0;
+        }
+
+        m_Bitmaps->clear();
+        delete m_Bitmaps;
+        m_Bitmaps = 0;
+    }
+
 	// Release the light object.
 	if(m_Light)
 	{
@@ -119,6 +180,14 @@ void GraphicsClass::Shutdown()
 		delete m_LightShader;
 		m_LightShader = 0;
 	}
+
+    // Release the texture shader
+    if (m_TextureShader)
+    {
+        m_TextureShader->Shutdown();
+        delete m_TextureShader;
+        m_TextureShader = 0;
+    }
 
 	// Release the model object.
 	if(m_Model)
@@ -169,7 +238,7 @@ bool GraphicsClass::Frame(float rotationX, float rotationY, float rotationZ, flo
 
 bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 {
-	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix;
+	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
 	bool result;
 
 
@@ -183,6 +252,7 @@ bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_D3D->GetWorldMatrix(worldMatrix);
 	m_D3D->GetProjectionMatrix(projectionMatrix);
+    m_D3D->GetOrthoMatrix(orthoMatrix);
 
     // Rotate the world matrix by the rotation value so that the triangle will spin.
     D3DXMatrixRotationYawPitchRoll(&worldMatrix, rotationX, rotationY, rotationZ);
@@ -191,10 +261,9 @@ bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 	m_Model->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
-				       m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
-				       m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix,
+        projectionMatrix, m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
+        m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
     if(!result)
 	{
 		return false;

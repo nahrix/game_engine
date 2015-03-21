@@ -219,9 +219,9 @@ void InputClass::ProcessInput()
 	if(m_mouseX > m_screenWidth)  { m_mouseX = m_screenWidth; }
 	if(m_mouseY > m_screenHeight) { m_mouseY = m_screenHeight; }
 
-    m_leftMouseDown = m_mouseState.rgbButtons[0] & 0x80;
-    m_rightMouseDown = m_mouseState.rgbButtons[1] & 0x80;
-    m_middleMouseDown = m_mouseState.rgbButtons[2] & 0x80;
+    m_leftMouseDown = (m_mouseState.rgbButtons[0] & 0x80) != 0;
+    m_rightMouseDown = (m_mouseState.rgbButtons[1] & 0x80) != 0;
+    m_middleMouseDown = (m_mouseState.rgbButtons[2] & 0x80) != 0;
 	
 	return;
 }

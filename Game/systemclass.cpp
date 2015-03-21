@@ -23,6 +23,10 @@ SystemClass::~SystemClass()
 
 bool SystemClass::Initialize()
 {
+#if (DEBUG)
+    _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
+
 	int screenWidth, screenHeight;
 	bool result;
 
@@ -55,13 +59,15 @@ bool SystemClass::Initialize()
 	{
 		return false;
 	}
-
+    
 	// Initialize the graphics object.
 	result = m_Graphics->Initialize(screenWidth, screenHeight, m_hwnd);
 	if(!result)
 	{
 		return false;
 	}
+
+    m_Graphics->LoadBitmapResource(L"../engine/data/seafloor.dds", 100, 100);
 	
 	return true;
 }
@@ -142,7 +148,9 @@ void SystemClass::Run()
 
 bool SystemClass::Frame()
 {
+    
 	bool result;
+    
     int mouseX, mouseY;
     int mouseMovedX, mouseMovedY, mouseMovedZ;
     float moveX, moveY;
@@ -159,14 +167,14 @@ bool SystemClass::Frame()
 
     moveX = 0;
     moveY = 0;
-
+    
 	// Do the input frame processing.
 	result = m_Input->Frame();
 	if(!result)
 	{
 		return false;
 	}
-
+    
 	// Get the location of the mouse from the input object,
 	m_Input->GetMouseLocation(mouseX, mouseY);
     m_Input->GetMouseMoved(mouseMovedX, mouseMovedY, mouseMovedZ);
@@ -236,7 +244,7 @@ bool SystemClass::Frame()
 	{
 		return false;
 	}
-
+    
 	return true;
 }
 
@@ -304,8 +312,8 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	else
 	{
 		// If windowed then set it to 800x600 resolution.
-		screenWidth  = SCREEN_WIDTH;
-		screenHeight = SCREEN_HEIGHT;
+		screenWidth  = WINDOW_WIDTH;
+		screenHeight = WINDOW_HEIGHT;
 
 		// Place the window in the middle of the screen.
 		posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth)  / 2;

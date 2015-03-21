@@ -4,6 +4,7 @@
 #ifndef _GRAPHICSCLASS_H_
 #define _GRAPHICSCLASS_H_
 
+#pragma comment(lib, "rpcrt4.lib")
 
 ///////////////////////
 // MY CLASS INCLUDES //
@@ -12,7 +13,11 @@
 #include "cameraclass.h"
 #include "modelclass.h"
 #include "lightshaderclass.h"
+#include "textureshaderclass.h"
 #include "lightclass.h"
+#include "bitmapclass.h"
+#include <unordered_map>
+#include <string>
 
 
 /////////////
@@ -20,8 +25,6 @@
 /////////////
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
-const int SCREEN_WIDTH = 1920;
-const int SCREEN_HEIGHT = 1080;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.1f;
 
@@ -38,15 +41,27 @@ public:
 
 	bool Initialize(int, int, HWND);
 	void Shutdown();
+
+    string LoadBitmapResource(WCHAR*, int, int);
+
+    int getScreenWidth();
+    int getScreenHeight();
+
+    void setScreenWidth();
+    void setScreenHeight();
+
 	bool Frame(float, float, float, float, float, float);
 	bool Render(float, float, float);
 
 private:
 	D3DClass* m_D3D;
+    int m_screenWidth, m_screenHeight;
 	CameraClass* m_Camera;
 	ModelClass* m_Model;
 	LightShaderClass* m_LightShader;
+    TextureShaderClass* m_TextureShader;
 	LightClass* m_Light;
+    unordered_map<string, BitmapClass*>* m_Bitmaps;
 };
 
 #endif
