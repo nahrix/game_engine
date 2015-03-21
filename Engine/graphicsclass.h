@@ -43,6 +43,7 @@ public:
 	void Shutdown();
 
     string LoadBitmapResource(WCHAR*, int, int);
+    string LoadModelResource(char*, WCHAR*);
 
     int getScreenWidth();
     int getScreenHeight();
@@ -57,11 +58,11 @@ private:
 	D3DClass* m_D3D;
     int m_screenWidth, m_screenHeight;
 	CameraClass* m_Camera;
-	ModelClass* m_Model;
 	LightShaderClass* m_LightShader;
     TextureShaderClass* m_TextureShader;
 	LightClass* m_Light;
     unordered_map<string, BitmapClass*>* m_Bitmaps;
+    unordered_map<string, ModelClass*>* m_Models;
 };
 
 #endif

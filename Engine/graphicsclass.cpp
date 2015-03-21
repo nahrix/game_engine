@@ -8,7 +8,7 @@ GraphicsClass::GraphicsClass()
 {
 	m_D3D = 0;
 	m_Camera = 0;
-	m_Model = 0;
+	m_Models = 0;
 	m_LightShader = 0;
     m_TextureShader = 0;
 	m_Light = 0;
@@ -60,17 +60,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     m_Camera->SetRotation(0.0f, 0.0f, 0.0f);
 	
 	// Create the model object.
-	m_Model = new ModelClass;
-	if(!m_Model)
+	m_Models = new unordered_map<string, ModelClass*>;
+	if(!m_Models)
 	{
-		return false;
-	}
-
-	// Initialize the model object.
-	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/syn.txt", L"../Engine/data/syn.png");
-	if(!result)
-	{
-		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
 		return false;
 	}
     
@@ -128,6 +120,33 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	return true;
 }
 
+string GraphicsClass::LoadModelResource(char* meshPath, WCHAR* texturePath)
+{
+    ModelClass* model;
+    UUID uuid;
+    char* cuuid;
+    string suuid;
+
+    // Create the bitmap resource
+    model = new ModelClass();
+    if (!model->Initialize(m_D3D->GetDevice(), meshPath, texturePath))
+    {
+		return "error";
+    }
+    
+    // Create a unique identifier for this resource
+    UuidCreate(&uuid);
+    UuidToStringA(&uuid, (RPC_CSTR*)&cuuid);
+    suuid = cuuid;
+    RpcStringFreeA((RPC_CSTR*)&cuuid);
+
+    // Store the bitmap, accessible by the unique id
+    m_Models->emplace(suuid, model);
+
+    // Return a copy of the unique id as a string
+    return suuid;
+}
+
 string GraphicsClass::LoadBitmapResource(WCHAR* filePath, int bitmapWidth, int bitmapHeight)
 {
     BitmapClass* bitmap;
@@ -135,23 +154,30 @@ string GraphicsClass::LoadBitmapResource(WCHAR* filePath, int bitmapWidth, int b
     char* cuuid;
     string suuid;
 
+    // Create the bitmap resource
     bitmap = new BitmapClass();
-    bitmap->Initialize(m_D3D->GetDevice(), filePath, bitmapWidth, bitmapHeight, m_screenWidth, m_screenHeight);
+    if (!bitmap->Initialize(m_D3D->GetDevice(), filePath, bitmapWidth, bitmapHeight, m_screenWidth, m_screenHeight))
+    {
+        return "error";
+    }
     
+    // Create a unique identifier for this resource
     UuidCreate(&uuid);
     UuidToStringA(&uuid, (RPC_CSTR*)&cuuid);
     suuid = cuuid;
     RpcStringFreeA((RPC_CSTR*)&cuuid);
 
+    // Store the bitmap, accessible by the unique id
     m_Bitmaps->emplace(suuid, bitmap);
 
+    // Return a copy of the unique id as a string
     return suuid;
 }
 
 
 void GraphicsClass::Shutdown()
 {
-    // Release the bitmap object.
+    // Release all bitmaps
     if (m_Bitmaps)
     {
         for (auto it = m_Bitmaps->begin(); it != m_Bitmaps->end(); it++)
@@ -189,13 +215,20 @@ void GraphicsClass::Shutdown()
         m_TextureShader = 0;
     }
 
-	// Release the model object.
-	if(m_Model)
-	{
-		m_Model->Shutdown();
-		delete m_Model;
-		m_Model = 0;
-	}
+	// Release all models
+	if (m_Models)
+    {
+        for (auto it = m_Models->begin(); it != m_Models->end(); it++)
+        {
+            it->second->Shutdown();
+            delete it->second;
+            it->second = 0;
+        }
+
+        m_Models->clear();
+        delete m_Models;
+        m_Models = 0;
+    }
 
 	// Release the camera object.
 	if(m_Camera)
@@ -238,7 +271,7 @@ bool GraphicsClass::Frame(float rotationX, float rotationY, float rotationZ, flo
 
 bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 {
-	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
+	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix, UIWorldMatrix;
 	bool result;
 
 
@@ -253,21 +286,47 @@ bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 	m_D3D->GetWorldMatrix(worldMatrix);
 	m_D3D->GetProjectionMatrix(projectionMatrix);
     m_D3D->GetOrthoMatrix(orthoMatrix);
+    m_D3D->GetUIWorldMatrix(UIWorldMatrix);
 
     // Rotate the world matrix by the rotation value so that the triangle will spin.
     D3DXMatrixRotationYawPitchRoll(&worldMatrix, rotationX, rotationY, rotationZ);
 
-	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	m_Model->Render(m_D3D->GetDeviceContext());
+    // Put all models and index buffers on the graphics pipeline to prepare them for drawing.
+    for (auto it = m_Models->begin(); it != m_Models->end(); it++)
+    {
+        it->second->Render(m_D3D->GetDeviceContext());
+        // Render the model using the light shader.
+        result = m_LightShader->Render(m_D3D->GetDeviceContext(), it->second->GetIndexCount(), worldMatrix, viewMatrix,
+            projectionMatrix, it->second->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(),
+            m_Light->GetDiffuseColor(), m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+        if(!result)
+	    {
+		    return false;
+	    }
+    }
 
-	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix,
-        projectionMatrix, m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
-        m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
-    if(!result)
-	{
-		return false;
-	}
+    // Disable the Z buffer for 2D rendering
+    m_D3D->TurnZBufferOff();
+
+    // Draw every bitmap in the array
+    for (auto it = m_Bitmaps->begin(); it != m_Bitmaps->end(); it++)
+    {
+        // Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
+        result = it->second->Render(m_D3D->GetDeviceContext(), 100, 100);
+	    if(!result)
+	    {
+		    return false;
+	    }
+
+	    // Render the bitmap with the texture shader.
+	    result = m_TextureShader->Render(m_D3D->GetDeviceContext(), it->second->GetIndexCount(), UIWorldMatrix, viewMatrix,
+            orthoMatrix, it->second->GetTexture());
+	    if(!result)
+	    {
+		    return false;
+	    }
+    }
+    m_D3D->TurnZBufferOn();
 
 	// Present the rendered scene to the screen.
 	m_D3D->EndScene();

@@ -26,7 +26,6 @@ bool BitmapClass::Initialize(ID3D11Device* device, WCHAR* textureFilename, int b
                              int screenHeight)
 {
 	bool result;
-
     // Store the dimensions of the screen
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;

@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "systemclass.h"
 
+string uuid;
 
 SystemClass::SystemClass()
 {
@@ -29,7 +30,6 @@ bool SystemClass::Initialize()
 
 	int screenWidth, screenHeight;
 	bool result;
-
 
 	// Initialize the width and height of the screen to zero before sending the variables into the function.
 	screenWidth = 0;
@@ -67,7 +67,9 @@ bool SystemClass::Initialize()
 		return false;
 	}
 
-    m_Graphics->LoadBitmapResource(L"../engine/data/seafloor.dds", 100, 100);
+    uuid = m_Graphics->LoadModelResource("../Engine/data/syn.txt", L"../Engine/data/syn.png");
+    uuid = m_Graphics->LoadModelResource("../Engine/data/sword.txt", L"../Engine/data/sword.tif");
+    uuid = m_Graphics->LoadBitmapResource(L"../engine/data/seafloor.dds", 100, 100);
 	
 	return true;
 }
