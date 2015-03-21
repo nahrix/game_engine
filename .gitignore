@@ -17,6 +17,9 @@
 *.lastbuildstate
 *.unsuccessfulbuild
 *.ilk
+*.bsc
+*.pgd
+*.sbr
  
 # Packages #
 ############
