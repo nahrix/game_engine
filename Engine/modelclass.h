@@ -34,13 +34,6 @@ private:
 		D3DXVECTOR3 normal;
 	};
 
-	struct ModelType
-	{
-		float x, y, z;
-		float tu, tv;
-		float nx, ny, nz;
-	};
-
 public:
 	ModelClass();
 	ModelClass(const ModelClass&);
@@ -69,7 +62,7 @@ private:
 	ID3D11Buffer *m_vertexBuffer, *m_indexBuffer;
 	int m_vertexCount, m_indexCount;
 	TextureClass* m_Texture;
-	ModelType* m_model;
+	VertexType* m_model;
 };
 
 #endif

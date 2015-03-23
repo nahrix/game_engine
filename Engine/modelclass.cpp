@@ -2,7 +2,7 @@
 // Filename: modelclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
 #include "modelclass.h"
-
+#include <sstream>
 
 ModelClass::ModelClass()
 {
@@ -91,20 +91,11 @@ ID3D11ShaderResourceView* ModelClass::GetTexture()
 
 bool ModelClass::InitializeBuffers(ID3D11Device* device)
 {
-	VertexType* vertices;
 	unsigned long* indices;
 	D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
     D3D11_SUBRESOURCE_DATA vertexData, indexData;
 	HRESULT result;
 	int i;
-
-
-	// Create the vertex array.
-	vertices = new VertexType[m_vertexCount];
-	if(!vertices)
-	{
-		return false;
-	}
 
 	// Create the index array.
 	indices = new unsigned long[m_indexCount];
@@ -112,17 +103,13 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 	{
 		return false;
 	}
-
-	// Load the vertex array and index array with data.
+    
+	// Load the index array with data.
 	for(i=0; i<m_vertexCount; i++)
 	{
-		vertices[i].position = D3DXVECTOR3(m_model[i].x, m_model[i].y, m_model[i].z);
-		vertices[i].texture = D3DXVECTOR2(m_model[i].tu, m_model[i].tv);
-		vertices[i].normal = D3DXVECTOR3(m_model[i].nx, m_model[i].ny, m_model[i].nz);
-
 		indices[i] = i;
 	}
-
+    
 	// Set up the description of the static vertex buffer.
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
     vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
@@ -132,7 +119,7 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 	vertexBufferDesc.StructureByteStride = 0;
 
 	// Give the subresource structure a pointer to the vertex data.
-    vertexData.pSysMem = vertices;
+    vertexData.pSysMem = m_model;
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
 
@@ -163,16 +150,11 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 		return false;
 	}
 
-	// Release the arrays now that the vertex and index buffers have been created and loaded.
-	delete [] vertices;
-	vertices = 0;
-
 	delete [] indices;
 	indices = 0;
 
 	return true;
 }
-
 
 void ModelClass::ShutdownBuffers()
 {
@@ -256,59 +238,30 @@ void ModelClass::ReleaseTexture()
 
 bool ModelClass::LoadModel(char* filename)
 {
-	ifstream fin;
-	char input;
-	int i;
-
+    int faceCount;
+    ifstream fin;
 
 	// Open the model file.
-	fin.open(filename);
-	
+	fin.open(filename, ios_base::in | ios_base::binary);
+
 	// If it could not open the file then exit.
 	if(fin.fail())
 	{
 		return false;
 	}
 
-	// Read up to the value of vertex count.
-	fin.get(input);
-	while(input != ':')
-	{
-		fin.get(input);
-	}
+    // Read in header data, which will be used to build data structures that will hold the model data
+    fin.read(reinterpret_cast<char *>(&m_vertexCount), sizeof(int));
+    fin.read(reinterpret_cast<char *>(&faceCount), sizeof(int));
 
-	// Read in the vertex count.
-	fin >> m_vertexCount;
+    // Create an array for storing the model's vertex data
+    m_model = new VertexType[m_vertexCount];
+    m_indexCount = m_vertexCount;
 
-	// Set the number of indices to be the same as the vertex count.
-	m_indexCount = m_vertexCount;
+    // Fill the array with the model's vertex data
+    fin.read(reinterpret_cast<char*>(m_model), sizeof(VertexType) * m_vertexCount);
 
-	// Create the model using the vertex count that was read in.
-	m_model = new ModelType[m_vertexCount];
-	if(!m_model)
-	{
-		return false;
-	}
-
-	// Read up to the beginning of the data.
-	fin.get(input);
-	while(input != ':')
-	{
-		fin.get(input);
-	}
-	fin.get(input);
-	fin.get(input);
-
-	// Read in the vertex data.
-	for(i=0; i<m_vertexCount; i++)
-	{
-		fin >> m_model[i].x >> m_model[i].y >> m_model[i].z;
-		fin >> m_model[i].tu >> m_model[i].tv;
-		fin >> m_model[i].nx >> m_model[i].ny >> m_model[i].nz;
-	}
-
-	// Close the model file.
-	fin.close();
+    fin.close();
 
 	return true;
 }

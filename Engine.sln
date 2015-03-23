@@ -1,12 +1,14 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Engine\Engine.vcxproj", "{3699430F-DA71-4E86-951A-245C9D7BCBEB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "Game\Game.vcxproj", "{BBA0D1D0-C38F-49ED-A369-84EF3AD8E4DF}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3699430F-DA71-4E86-951A-245C9D7BCBEB} = {3699430F-DA71-4E86-951A-245C9D7BCBEB}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConvertObj", "ConvertObj\ConvertObj.vcxproj", "{CFFE9B1D-ED23-486E-9F86-648527F8A7FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,6 +24,10 @@ Global
 		{BBA0D1D0-C38F-49ED-A369-84EF3AD8E4DF}.Debug|Win32.Build.0 = Debug|Win32
 		{BBA0D1D0-C38F-49ED-A369-84EF3AD8E4DF}.Release|Win32.ActiveCfg = Release|Win32
 		{BBA0D1D0-C38F-49ED-A369-84EF3AD8E4DF}.Release|Win32.Build.0 = Release|Win32
+		{CFFE9B1D-ED23-486E-9F86-648527F8A7FB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CFFE9B1D-ED23-486E-9F86-648527F8A7FB}.Debug|Win32.Build.0 = Debug|Win32
+		{CFFE9B1D-ED23-486E-9F86-648527F8A7FB}.Release|Win32.ActiveCfg = Release|Win32
+		{CFFE9B1D-ED23-486E-9F86-648527F8A7FB}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

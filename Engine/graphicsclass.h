@@ -54,7 +54,7 @@ public:
 	bool Frame(float, float, float, float, float, float);
 	bool Render(float, float, float);
 
-private:
+public:
 	D3DClass* m_D3D;
     int m_screenWidth, m_screenHeight;
 	CameraClass* m_Camera;
