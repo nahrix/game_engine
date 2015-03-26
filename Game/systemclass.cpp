@@ -68,8 +68,8 @@ bool SystemClass::Initialize()
 	}
 
     //uuid = m_Graphics->LoadModelResource("../Engine/data/syn.bin", L"../Engine/data/syn.png");
-    //uuid = m_Graphics->LoadModelResource("../Engine/data/sword.bin", L"../Engine/data/sword.tif");
-    uuid = m_Graphics->LoadModelResource("../Engine/data/knight.bin", L"../Engine/data/armor.jpg");
+    uuid = m_Graphics->LoadModelResource("../Engine/data/swordOpt.bin", L"../Engine/data/sword.tif");
+    uuid = m_Graphics->LoadModelResource("../Engine/data/knightOpt.bin", L"../Engine/data/armor.jpg");
     uuid = m_Graphics->LoadBitmapResource(L"../engine/data/seafloor.dds", 100, 100);
 	
 	return true;

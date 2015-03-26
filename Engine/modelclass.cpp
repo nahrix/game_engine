@@ -105,7 +105,7 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 	}
     
 	// Load the index array with data.
-	for(i=0; i<m_vertexCount; i++)
+	for(i = 0; i < m_vertexCount; i++)
 	{
 		indices[i] = i;
 	}

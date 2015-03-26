@@ -176,14 +176,24 @@ bool ReadFileCounts(char* filename, int& vertexCount, int& textureCount, int& no
 			fin.get(input);
 			if(input == ' ')
             {
+				bool space = true;
                 face = 0;
                 while (input != '\n')
                 {
                     fin.get(input);
+
                     if (input == ' ')
-                        face++;
+						space = true;
+					else if (space && (input != '\n'))
+					{
+						space = false;
+						face++;
+					}
+					else
+						space = false;
                 }
-                faceCount += (face - 1);
+
+                faceCount += (face - 2);
             }
 		}
 		
@@ -325,15 +335,6 @@ bool LoadDataStructures(char* filename, int vertexCount, int textureCount, int n
                     {
                         fin.get(input);
                     }
-
-
-                    /*
-				// Read the face data in backwards to convert it to a left hand system from right hand system.
-				fin >> faces[faceIndex].vIndex3 >> input2 >> faces[faceIndex].tIndex3 >> input2 >> faces[faceIndex].nIndex3
-				    >> faces[faceIndex].vIndex2 >> input2 >> faces[faceIndex].tIndex2 >> input2 >> faces[faceIndex].nIndex2
-				    >> faces[faceIndex].vIndex1 >> input2 >> faces[faceIndex].tIndex1 >> input2 >> faces[faceIndex].nIndex1;
-				faceIndex++;
-                */
                 }
 			}
 		}
@@ -350,6 +351,47 @@ bool LoadDataStructures(char* filename, int vertexCount, int textureCount, int n
 
 	// Close the file.
 	fin.close();
+
+
+	int* swapRank = new int[faceCount];
+	int highestRank, highestIndex;
+	FaceType tempFace;
+
+	for (int i = 0; i < faceCount; i++)
+	{
+		ZeroMemory(swapRank, sizeof(int) * faceCount);
+		highestRank = 0;
+		highestIndex = 0;
+
+		for (int j = 0; j < faceCount; j++)
+		{
+			if (i == j)
+				continue;
+
+			if ((faces[i].vIndex1 == faces[j].vIndex1) || (faces[i].vIndex1 == faces[j].vIndex2) || (faces[i].vIndex1 == faces[j].vIndex3))
+				swapRank[j]++;
+			if ((faces[i].vIndex2 == faces[j].vIndex1) || (faces[i].vIndex2 == faces[j].vIndex2) || (faces[i].vIndex2 == faces[j].vIndex3))
+				swapRank[j]++;
+			if ((faces[i].vIndex3 == faces[j].vIndex1) || (faces[i].vIndex3 == faces[j].vIndex2) || (faces[i].vIndex3 == faces[j].vIndex3))
+				swapRank[j]++;
+			
+			if (swapRank[j] > highestRank)
+			{
+				highestRank = swapRank[j];
+				highestIndex = j;
+			}
+
+			if (highestRank >= 2)
+				break;
+		}
+
+		if (highestRank > 0)
+		{
+			tempFace = faces[i];
+			faces[i] = faces[highestIndex];
+			faces[highestIndex] = tempFace;
+		}
+	}
 
     vertexCount = faceCount * 3;
     VertexOutputType outputVertex;

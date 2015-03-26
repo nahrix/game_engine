@@ -141,7 +141,7 @@ string GraphicsClass::LoadModelResource(char* meshPath, WCHAR* texturePath)
     RpcStringFreeA((RPC_CSTR*)&cuuid);
 
     // Store the bitmap, accessible by the unique id
-    m_Models->emplace(suuid, model);
+    m_Models->insert(make_pair(suuid, model));
 
     // Return a copy of the unique id as a string
     return suuid;
@@ -168,7 +168,7 @@ string GraphicsClass::LoadBitmapResource(WCHAR* filePath, int bitmapWidth, int b
     RpcStringFreeA((RPC_CSTR*)&cuuid);
 
     // Store the bitmap, accessible by the unique id
-    m_Bitmaps->emplace(suuid, bitmap);
+    m_Bitmaps->insert(make_pair(suuid, bitmap));
 
     // Return a copy of the unique id as a string
     return suuid;
