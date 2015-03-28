@@ -10,6 +10,7 @@ ModelClass::ModelClass()
 	m_indexBuffer = 0;
 	m_Texture = 0;
 	m_model = 0;
+	m_indexOffset = 0;
 }
 
 
@@ -23,20 +24,12 @@ ModelClass::~ModelClass()
 }
 
 
-bool ModelClass::Initialize(ID3D11Device* device, char* modelFilename, WCHAR* textureFilename)
+bool ModelClass::Initialize(ID3D11Device* device, char* modelFilename, WCHAR* textureFilename, int indexOffset)
 {
 	bool result;
 
-
 	// Load in the model data,
 	result = LoadModel(modelFilename);
-	if(!result)
-	{
-		return false;
-	}
-
-	// Initialize the vertex and index buffers.
-	result = InitializeBuffers(device);
 	if(!result)
 	{
 		return false;
@@ -48,6 +41,8 @@ bool ModelClass::Initialize(ID3D11Device* device, char* modelFilename, WCHAR* te
 	{
 		return false;
 	}
+
+	m_indexOffset = indexOffset;
 
 	return true;
 }
@@ -88,71 +83,13 @@ ID3D11ShaderResourceView* ModelClass::GetTexture()
 	return m_Texture->GetTexture();
 }
 
+VertexType::Default* ModelClass::GetVertices()
+{
+	return m_model;
+}
 
 bool ModelClass::InitializeBuffers(ID3D11Device* device)
 {
-	unsigned long* indices;
-	D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
-    D3D11_SUBRESOURCE_DATA vertexData, indexData;
-	HRESULT result;
-	int i;
-
-	// Create the index array.
-	indices = new unsigned long[m_indexCount];
-	if(!indices)
-	{
-		return false;
-	}
-    
-	// Load the index array with data.
-	for(i = 0; i < m_vertexCount; i++)
-	{
-		indices[i] = i;
-	}
-    
-	// Set up the description of the static vertex buffer.
-    vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
-    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    vertexBufferDesc.CPUAccessFlags = 0;
-    vertexBufferDesc.MiscFlags = 0;
-	vertexBufferDesc.StructureByteStride = 0;
-
-	// Give the subresource structure a pointer to the vertex data.
-    vertexData.pSysMem = m_model;
-	vertexData.SysMemPitch = 0;
-	vertexData.SysMemSlicePitch = 0;
-
-	// Now create the vertex buffer.
-    result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
-	if(FAILED(result))
-	{
-		return false;
-	}
-
-	// Set up the description of the static index buffer.
-    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_indexCount;
-    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    indexBufferDesc.CPUAccessFlags = 0;
-    indexBufferDesc.MiscFlags = 0;
-	indexBufferDesc.StructureByteStride = 0;
-
-	// Give the subresource structure a pointer to the index data.
-    indexData.pSysMem = indices;
-	indexData.SysMemPitch = 0;
-	indexData.SysMemSlicePitch = 0;
-
-	// Create the index buffer.
-	result = device->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
-	if(FAILED(result))
-	{
-		return false;
-	}
-
-	delete [] indices;
-	indices = 0;
-
 	return true;
 }
 
@@ -183,7 +120,7 @@ void ModelClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
 
 
 	// Set vertex buffer stride and offset.
-	stride = sizeof(VertexType); 
+	stride = sizeof(VertexType::Default); 
 	offset = 0;
     
 	// Set the vertex buffer to active in the input assembler so it can be rendered.
@@ -255,11 +192,11 @@ bool ModelClass::LoadModel(char* filename)
     fin.read(reinterpret_cast<char *>(&faceCount), sizeof(int));
 
     // Create an array for storing the model's vertex data
-    m_model = new VertexType[m_vertexCount];
+    m_model = new VertexType::Default[m_vertexCount];
     m_indexCount = m_vertexCount;
 
     // Fill the array with the model's vertex data
-    fin.read(reinterpret_cast<char*>(m_model), sizeof(VertexType) * m_vertexCount);
+    fin.read(reinterpret_cast<char*>(m_model), sizeof(VertexType::Default) * m_vertexCount);
 
     fin.close();
 

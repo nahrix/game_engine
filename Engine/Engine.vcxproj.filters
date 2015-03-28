@@ -57,6 +57,9 @@
     <ClCompile Include="fontshaderclass.cpp">
       <Filter>Source Files\Font</Filter>
     </ClCompile>
+    <ClCompile Include="bufferclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cameraclass.h">
@@ -94,6 +97,12 @@
     </ClInclude>
     <ClInclude Include="fontclass.h">
       <Filter>Header Files\Font</Filter>
+    </ClInclude>
+    <ClInclude Include="bufferclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vertextypes.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

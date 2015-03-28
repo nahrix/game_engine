@@ -88,6 +88,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bitmapclass.cpp" />
+    <ClCompile Include="bufferclass.cpp" />
     <ClCompile Include="cameraclass.cpp" />
     <ClCompile Include="d3dclass.cpp" />
     <ClCompile Include="fontclass.cpp" />
@@ -102,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitmapclass.h" />
+    <ClInclude Include="bufferclass.h" />
     <ClInclude Include="cameraclass.h" />
     <ClInclude Include="d3dclass.h" />
     <ClInclude Include="fontclass.h" />
@@ -113,6 +115,7 @@
     <ClInclude Include="textclass.h" />
     <ClInclude Include="textureclass.h" />
     <ClInclude Include="textureshaderclass.h" />
+    <ClInclude Include="vertextypes.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="font.ps" />

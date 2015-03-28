@@ -52,23 +52,31 @@ void LightShaderClass::Shutdown()
 
 
 bool LightShaderClass::Render(ID3D11DeviceContext* deviceContext, int indexCount, D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, 
-                              D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, D3DXVECTOR3 lightDirection,
-                              D3DXVECTOR4 ambientColor, D3DXVECTOR4 diffuseColor, D3DXVECTOR3 cameraPosition,
-                              D3DXVECTOR4 specularColor, float specularPower)
+                              D3DXMATRIX projectionMatrix, vector<ID3D11ShaderResourceView*>* textures, int numTextures, vector<int>* drawIndices,
+							  D3DXVECTOR3 lightDirection, D3DXVECTOR4 ambientColor, D3DXVECTOR4 diffuseColor,
+							  D3DXVECTOR3 cameraPosition, D3DXVECTOR4 specularColor, float specularPower)
 {
 	bool result;
-
-
+	int indexSize, indexOffset;
+	ID3D11ShaderResourceView* res;
 	// Set the shader parameters that it will use for rendering.
-	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, lightDirection, ambientColor,
+	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, lightDirection, ambientColor,
         diffuseColor, cameraPosition, specularColor, specularPower);
 	if(!result)
 	{
 		return false;
 	}
 
-	// Now render the prepared buffers with the shader.
-	RenderShader(deviceContext, indexCount);
+	for (int i = 0; i < numTextures; i++)
+	{
+		res = (*textures)[i];
+		// Set shader texture resource in the pixel shader.
+		deviceContext->PSSetShaderResources(0, 1, &res);
+
+		// Now render the prepared buffers with the shader.
+		indexSize = (*drawIndices)[i*2];
+		RenderShader(deviceContext, (*drawIndices)[i*2], (*drawIndices)[(i*2)+1]);
+	}
 
 	return true;
 }
@@ -355,9 +363,9 @@ void LightShaderClass::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND h
 
 
 bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext, D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, 
-										   D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture,
-                                           D3DXVECTOR3 lightDirection, D3DXVECTOR4 ambientColor, D3DXVECTOR4 diffuseColor,
-                                           D3DXVECTOR3 cameraPosition, D3DXVECTOR4 specularColor, float specularPower)
+										   D3DXMATRIX projectionMatrix, D3DXVECTOR3 lightDirection, D3DXVECTOR4 ambientColor,
+										   D3DXVECTOR4 diffuseColor, D3DXVECTOR3 cameraPosition, D3DXVECTOR4 specularColor,
+										   float specularPower)
 {
 	HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -419,9 +427,6 @@ bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext, D
 	// Now set the camera constant buffer in the vertex shader with the updated values.
 	deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_cameraBuffer);
 
-	// Set shader texture resource in the pixel shader.
-	deviceContext->PSSetShaderResources(0, 1, &texture);
-
 	// Lock the light constant buffer so it can be written to.
 	result = deviceContext->Map(m_lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result))
@@ -452,7 +457,7 @@ bool LightShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext, D
 }
 
 
-void LightShaderClass::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void LightShaderClass::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount, int indexStart)
 {
 	// Set the vertex input layout.
 	deviceContext->IASetInputLayout(m_layout);
@@ -465,7 +470,7 @@ void LightShaderClass::RenderShader(ID3D11DeviceContext* deviceContext, int inde
 	deviceContext->PSSetSamplers(0, 1, &m_sampleState);
 
 	// Render the triangle.
-	deviceContext->DrawIndexed(indexCount, 0, 0);
+	deviceContext->DrawIndexed(indexCount, indexStart, 0);
 
 	return;
 }

@@ -19,31 +19,25 @@ using namespace std;
 // MY CLASS INCLUDES //
 ///////////////////////
 #include "textureclass.h"
-
+#include "bufferclass.h"
+#include "vertextypes.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: ModelClass
 ////////////////////////////////////////////////////////////////////////////////
 class ModelClass
 {
-private:
-	struct VertexType
-	{
-		D3DXVECTOR3 position;
-	    D3DXVECTOR2 texture;
-		D3DXVECTOR3 normal;
-	};
-
 public:
 	ModelClass();
 	ModelClass(const ModelClass&);
 	~ModelClass();
 
-	bool Initialize(ID3D11Device*, char*, WCHAR*);
+	bool Initialize(ID3D11Device*, char*, WCHAR*, int);
 	void Shutdown();
 	void Render(ID3D11DeviceContext*);
 
 	int GetIndexCount();
+	VertexType::Default* GetVertices();
 	ID3D11ShaderResourceView* GetTexture();
 
 
@@ -61,8 +55,9 @@ private:
 private:
 	ID3D11Buffer *m_vertexBuffer, *m_indexBuffer;
 	int m_vertexCount, m_indexCount;
+	int m_indexOffset;
 	TextureClass* m_Texture;
-	VertexType* m_model;
+	VertexType::Default* m_model;
 };
 
 #endif

@@ -13,6 +13,9 @@ GraphicsClass::GraphicsClass()
     m_TextureShader = 0;
 	m_Light = 0;
     m_Bitmaps = 0;
+	m_Buffers = 0;
+	m_ModelIndices = 0;
+	m_Textures = 0;
 }
 
 
@@ -33,6 +36,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
+	m_ModelIndices = new vector<int>;
+	m_Textures = new vector<ID3D11ShaderResourceView*>;
+
 	// Create the Direct3D object.
 	m_D3D = new D3DClass;
 	if(!m_D3D)
@@ -47,6 +53,15 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		MessageBox(hwnd, L"Could not initialize Direct3D.", L"Error", MB_OK);
 		return false;
 	}
+
+	// Create the buffer resource manager
+	m_Buffers = new BufferClass();
+	if (!m_Buffers)
+	{
+		return false;
+	}
+
+	m_Buffers->Initialize(m_D3D);
 
 	// Create the camera object.
 	m_Camera = new CameraClass;
@@ -129,10 +144,16 @@ string GraphicsClass::LoadModelResource(char* meshPath, WCHAR* texturePath)
 
     // Create the bitmap resource
     model = new ModelClass();
-    if (!model->Initialize(m_D3D->GetDevice(), meshPath, texturePath))
+    if (!model->Initialize(m_D3D->GetDevice(), meshPath, texturePath, m_Buffers->GetDynamicIndexCount()))
     {
 		return "error";
     }
+
+	m_ModelIndices->push_back(model->GetIndexCount());
+	m_ModelIndices->push_back(m_Buffers->GetDynamicIndexCount());
+
+	// Add the model's mesh data to the vertex buffer manager
+	m_Buffers->AddModel(model->GetVertices(), model->GetIndexCount());
     
     // Create a unique identifier for this resource
     UuidCreate(&uuid);
@@ -142,6 +163,8 @@ string GraphicsClass::LoadModelResource(char* meshPath, WCHAR* texturePath)
 
     // Store the bitmap, accessible by the unique id
     m_Models->insert(make_pair(suuid, model));
+
+	m_Textures->push_back(model->GetTexture());
 
     // Return a copy of the unique id as a string
     return suuid;
@@ -215,6 +238,14 @@ void GraphicsClass::Shutdown()
         m_TextureShader = 0;
     }
 
+	// Release all buffers
+	if (m_Buffers)
+	{
+		m_Buffers->Shutdown();
+		delete m_Buffers;
+		m_Buffers = 0;
+	}
+
 	// Release all models
 	if (m_Models)
     {
@@ -229,6 +260,20 @@ void GraphicsClass::Shutdown()
         delete m_Models;
         m_Models = 0;
     }
+
+	// Release model indices
+	if (m_ModelIndices)
+	{
+		delete m_ModelIndices;
+		m_ModelIndices = 0;
+	}
+
+	// Release the texture index
+	if (m_Textures)
+	{
+		delete m_Textures;
+		m_Textures = 0;
+	}
 
 	// Release the camera object.
 	if(m_Camera)
@@ -290,7 +335,24 @@ bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 
     // Rotate the world matrix by the rotation value so that the triangle will spin.
     D3DXMatrixRotationYawPitchRoll(&worldMatrix, rotationX, rotationY, rotationZ);
+	/*
+	bool LightShaderClass::Render(ID3D11DeviceContext* deviceContext, int indexCount, D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, 
+                              D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView** textures, int numTextures, int** drawIndices,
+							  D3DXVECTOR3 lightDirection, D3DXVECTOR4 ambientColor, D3DXVECTOR4 diffuseColor,
+							  D3DXVECTOR3 cameraPosition, D3DXVECTOR4 specularColor, float specularPower)
+							  */
+	m_Buffers->RenderBuffers(m_D3D->GetDeviceContext());
+	
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Buffers->GetDynamicIndexCount(), worldMatrix, viewMatrix,
+		projectionMatrix, m_Textures, m_Models->size(), m_ModelIndices, m_Light->GetDirection(),
+		m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), m_Camera->GetPosition(), m_Light->GetSpecularColor(),
+		m_Light->GetSpecularPower());
+    if(!result)
+	{
+		return false;
+	}
 
+	/*
     // Put all models and index buffers on the graphics pipeline to prepare them for drawing.
     for (auto it = m_Models->begin(); it != m_Models->end(); it++)
     {
@@ -304,6 +366,7 @@ bool GraphicsClass::Render(float rotationX, float rotationY, float rotationZ)
 		    return false;
 	    }
     }
+	*/
 
     // Disable the Z buffer for 2D rendering
     m_D3D->TurnZBufferOff();

@@ -16,6 +16,7 @@
 #include "textureshaderclass.h"
 #include "lightclass.h"
 #include "bitmapclass.h"
+#include "bufferclass.h"
 #include <unordered_map>
 #include <string>
 
@@ -56,6 +57,7 @@ public:
 
 public:
 	D3DClass* m_D3D;
+	BufferClass* m_Buffers;
     int m_screenWidth, m_screenHeight;
 	CameraClass* m_Camera;
 	LightShaderClass* m_LightShader;
@@ -63,6 +65,8 @@ public:
 	LightClass* m_Light;
     unordered_map<string, BitmapClass*>* m_Bitmaps;
     unordered_map<string, ModelClass*>* m_Models;
+	vector<int>* m_ModelIndices;
+	vector<ID3D11ShaderResourceView*>* m_Textures;
 };
 
 #endif
